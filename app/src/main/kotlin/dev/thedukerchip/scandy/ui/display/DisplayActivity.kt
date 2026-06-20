@@ -1,6 +1,7 @@
 package dev.thedukerchip.scandy.ui.display
 
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.os.Bundle
 import android.util.Log
 import androidx.core.content.IntentCompat
@@ -51,15 +52,20 @@ class DisplayActivity : BaseActivity() {
 
     private fun showBrowse(url: String?) {
         val browseIntent = Intent(Intent.ACTION_VIEW, url?.toUri())
-        if (browseIntent.resolveActivity(packageManager) != null) {
-            if (url != null) {
-                binding.displayValue.text = url
-                binding.browse.show()
-                binding.browse.setOnClickListener {
-                    startActivity(browseIntent)
-                }
+        val isResolved = packageManager
+            .queryIntentActivities(browseIntent, PackageManager.MATCH_ALL)
+            .isNotEmpty()
+
+        if (isResolved && url != null) {
+            binding.displayValue.text = url
+            binding.browse.show()
+            binding.browse.setOnClickListener {
                 startActivity(browseIntent)
             }
+            startActivity(browseIntent)
         }
+
+        // TODO Handle not resolved scenario
+        // TODO Handle url empty scenario
     }
 }
