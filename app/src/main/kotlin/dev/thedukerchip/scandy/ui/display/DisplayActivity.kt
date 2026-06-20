@@ -1,9 +1,10 @@
 package dev.thedukerchip.scandy.ui.display
 
 import android.content.Intent
-import android.net.Uri
 import android.os.Bundle
 import android.util.Log
+import androidx.core.content.IntentCompat
+import androidx.core.net.toUri
 import dev.thedukerchip.scandy.camera.ScandyBarcode
 import dev.thedukerchip.scandy.extensions.copyToClipboard
 import dev.thedukerchip.scandy.ui.BaseActivity
@@ -28,7 +29,7 @@ class DisplayActivity : BaseActivity() {
             copyToClipboard("Scanned text", binding.displayValue.text.toString())
         }
 
-        val code = intent.getSerializableExtra(CODE) as? ScandyBarcode
+        val code = IntentCompat.getSerializableExtra(intent, CODE, ScandyBarcode::class.java)
         if (code != null) {
             when (code) {
                 is ScandyBarcode.Link -> {
@@ -49,7 +50,7 @@ class DisplayActivity : BaseActivity() {
     }
 
     private fun showBrowse(url: String?) {
-        val browseIntent = Intent(Intent.ACTION_VIEW, Uri.parse(url))
+        val browseIntent = Intent(Intent.ACTION_VIEW, url?.toUri())
         if (browseIntent.resolveActivity(packageManager) != null) {
             if (url != null) {
                 binding.displayValue.text = url

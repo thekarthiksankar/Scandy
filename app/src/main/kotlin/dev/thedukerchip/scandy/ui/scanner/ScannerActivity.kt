@@ -7,6 +7,8 @@ import android.os.Bundle
 import android.util.Log
 import android.util.Size
 import androidx.camera.core.*
+import androidx.camera.core.resolutionselector.ResolutionSelector
+import androidx.camera.core.resolutionselector.ResolutionStrategy
 import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.camera.view.LifecycleCameraController
 import androidx.core.content.ContextCompat
@@ -155,14 +157,23 @@ class ScannerActivity : BaseActivity() {
 
     private fun getPreviewConfig(): Preview {
         return Preview.Builder().build().also {
-            it.setSurfaceProvider(binding.barcodeFinderPv.surfaceProvider)
+            it.surfaceProvider = binding.barcodeFinderPv.surfaceProvider
         }
     }
 
-    @androidx.annotation.OptIn(androidx.camera.core.ExperimentalGetImage::class)
+    @androidx.annotation.OptIn(ExperimentalGetImage::class)
     private fun getImagerAnalyzer(): ImageAnalysis {
+        val resolutionSelector = ResolutionSelector.Builder()
+            .setResolutionStrategy(
+                ResolutionStrategy(
+                    Size(1280, 720),
+                    ResolutionStrategy.FALLBACK_RULE_CLOSEST_HIGHER_THEN_LOWER
+                )
+            )
+            .build()
+
         val analyzer = ImageAnalysis.Builder()
-            .setTargetResolution(Size(1280, 720))
+            .setResolutionSelector(resolutionSelector)
             .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
             .build()
 

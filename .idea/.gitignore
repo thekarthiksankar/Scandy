@@ -9,3 +9,10 @@
 /modules.xml
 /vcs.xml
 /deploymentTargetDropDown.xml
+/AndroidProjectSystem.xml
+/deploymentTargetSelector.xml
+/migrations.xml
+/planningMode.xml
+/runConfigurations.xml
+/studiobot.xml
+/codeStyles/Project.xml
