@@ -26,17 +26,15 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.Scandy">
         <activity
-            android:name="dev.thedukerchip.scandy.ui.launcher.LauncherActivity"
-            android:exported="true">
+            android:name="dev.thedukerchip.scandy.ui.scanner.ScannerActivity"
+            android:exported="true"
+            android:theme="@style/Theme.Scandy.Splash">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-        <activity
-            android:name="dev.thedukerchip.scandy.ui.scanner.ScannerActivity"
-            android:exported="true" />
         <activity
             android:name="dev.thedukerchip.scandy.ui.display.DisplayActivity"
             android:exported="true" />
