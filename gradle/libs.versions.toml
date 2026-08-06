@@ -1,5 +1,5 @@
 [versions]
-agp = "9.2.1"
+agp = "9.3.1"
 androidxCamera = "1.6.1"
 androidxNavigation = "2.9.8"
 androidxRoom = "2.8.4"
@@ -11,7 +11,7 @@ androidx-camera-lifecycle = { module = "androidx.camera:camera-lifecycle", versi
 androidx-camera-view = { module = "androidx.camera:camera-view", version.ref = "androidxCamera" }
 androidx-coreKtx = "androidx.core:core-ktx:1.19.0"
 androidx-core-splashscreen = "androidx.core:core-splashscreen:1.2.0"
-androidx-constraintlayout = "androidx.constraintlayout:constraintlayout:2.2.1"
+androidx-constraintlayout = "androidx.constraintlayout:constraintlayout:2.2.2"
 androidx-navigation-fragment = { module = "androidx.navigation:navigation-fragment-ktx", version.ref = "androidxNavigation" }
 androidx-navigation-ui = { module = "androidx.navigation:navigation-ui-ktx", version.ref = "androidxNavigation" }
 androidx-room-runtime = { module = "androidx.room:room-runtime", version.ref = "androidxRoom" }
