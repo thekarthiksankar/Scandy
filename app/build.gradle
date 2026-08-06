@@ -12,15 +12,21 @@ android {
         applicationId "dev.thedukerchip.scandy"
         minSdk 23
         targetSdk 37
-        versionCode 3
-        versionName "1.0.2"
+        versionCode 6
+        versionName "1.0.3"
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+
+        ndk {
+            debugSymbolLevel = "FULL"
+        }
     }
 
     buildTypes {
         release {
-            minifyEnabled false
+            optimization {
+                enable = true
+            }
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }
 
