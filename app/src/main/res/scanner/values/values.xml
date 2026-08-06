@@ -5,6 +5,7 @@
     <string name="info_camera_permission">To scan barcode kindly turn on Camera access for Scandy</string>
     <string name="action_turn_on">Turn on</string>
     <string name="cd_torch_btn">Enable/Disable flash light</string>
+    <string name="info_flash_unavailable">Flash is not available on your device</string>
 
     <!--  DIMENSIONS  -->
     <dimen name="permission_title_spacing">8dp</dimen>

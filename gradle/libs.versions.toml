@@ -1,8 +1,10 @@
 [versions]
 agp = "9.3.1"
 androidxCamera = "1.6.1"
+androidxLifecycle = "2.11.0"
 androidxNavigation = "2.9.8"
 androidxRoom = "2.8.4"
+kotlinxCoroutines = "1.11.0"
 
 [libraries]
 androidx-appcompat = "androidx.appcompat:appcompat:1.7.1"
@@ -12,10 +14,14 @@ androidx-camera-view = { module = "androidx.camera:camera-view", version.ref = "
 androidx-coreKtx = "androidx.core:core-ktx:1.19.0"
 androidx-core-splashscreen = "androidx.core:core-splashscreen:1.2.0"
 androidx-constraintlayout = "androidx.constraintlayout:constraintlayout:2.2.2"
+androidx-lifecycle-runtime = { module = "androidx.lifecycle:lifecycle-runtime-ktx", version.ref = "androidxLifecycle" }
+androidx-lifecycle-livedata = { module = "androidx.lifecycle:lifecycle-livedata-ktx", version.ref = "androidxLifecycle" }
 androidx-navigation-fragment = { module = "androidx.navigation:navigation-fragment-ktx", version.ref = "androidxNavigation" }
 androidx-navigation-ui = { module = "androidx.navigation:navigation-ui-ktx", version.ref = "androidxNavigation" }
 androidx-room-runtime = { module = "androidx.room:room-runtime", version.ref = "androidxRoom" }
 androidx-room-compiler = { module = "androidx.room:room-compiler", version.ref = "androidxRoom" }
+kotlinx-coroutines-android = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-android", version.ref = "kotlinxCoroutines" }
+kotlinx-coroutines-play-services = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-play-services", version.ref = "kotlinxCoroutines" }
 material = "com.google.android.material:material:1.14.0"
 mlkit-barcodeScanning = "com.google.mlkit:barcode-scanning:17.3.0"
 
@@ -26,7 +32,9 @@ junit = "junit:junit:4.13.2"
 
 [bundles]
 androidx-camera = ["androidx-camera-core", "androidx-camera-lifecycle", "androidx-camera-view"]
+androidx-lifecycle = ["androidx-lifecycle-runtime", "androidx-lifecycle-livedata"]
 androidx-navigation = ["androidx-navigation-fragment", "androidx-navigation-ui"]
+kotlinx-coroutines = ["kotlinx-coroutines-android", "kotlinx-coroutines-play-services"]
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }

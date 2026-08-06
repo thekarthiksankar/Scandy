@@ -60,7 +60,7 @@ android {
 }
 
 dependencies {
-
+    implementation libs.bundles.kotlinx.coroutines
     implementation libs.androidx.coreKtx
     implementation libs.androidx.core.splashscreen
     implementation libs.androidx.appcompat
@@ -70,6 +70,7 @@ dependencies {
     implementation libs.mlkit.barcodeScanning
 
     implementation libs.bundles.androidx.camera
+    implementation libs.bundles.androidx.lifecycle
     implementation libs.bundles.androidx.navigation
 
     implementation libs.androidx.room.runtime

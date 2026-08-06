@@ -4,30 +4,32 @@ import android.Manifest
 import android.content.Intent
 import android.content.res.ColorStateList
 import android.os.Bundle
-import android.util.Log
-import android.util.Size
 import android.view.ViewGroup
-import androidx.camera.core.*
-import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
-import androidx.camera.core.resolutionselector.ResolutionSelector
-import androidx.camera.core.resolutionselector.ResolutionStrategy
-import androidx.camera.lifecycle.ProcessCameraProvider
-import androidx.camera.view.LifecycleCameraController
+import android.widget.Toast
 import androidx.core.content.ContextCompat
+import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.updateLayoutParams
-import com.google.android.material.floatingactionbutton.FloatingActionButton
-import dev.thedukerchip.scandy.camera.BarcodeAnalyzer
-import dev.thedukerchip.scandy.camera.OnBarcodeDetected
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
+import dev.thedukerchip.scandy.camera.FlashStatus
 import dev.thedukerchip.scandy.camera.ScandyBarcode
-import dev.thedukerchip.scandy.extensions.*
+import dev.thedukerchip.scandy.camera.Scanner
+import dev.thedukerchip.scandy.extensions.gone
+import dev.thedukerchip.scandy.extensions.setOnClickListener
+import dev.thedukerchip.scandy.extensions.visible
 import dev.thedukerchip.scandy.permissions.PermissionResult
 import dev.thedukerchip.scandy.permissions.permissionWrapperFor
 import dev.thedukerchip.scandy.ui.BaseActivity
 import dev.thedukerchip.scandy.ui.about.AboutActivity
 import dev.thedukerchip.scandy.ui.display.DisplayActivity
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.launch
 import scandy.R
 import scandy.databinding.ActivityScannerBinding
 
@@ -37,24 +39,15 @@ class ScannerActivity : BaseActivity() {
 
     private lateinit var binding: ActivityScannerBinding
 
-    private var cameraController: LifecycleCameraController? = null
-    private var cameraProvider: ProcessCameraProvider? = null
-    private var imageAnalysis: ImageAnalysis? = null
+    private val scanner by lazy { Scanner(applicationContext) }
+
+    private val cameraAccess = MutableStateFlow(false)
 
     private val onPermissionResult = PermissionResult { accepted ->
-        if (accepted) {
-            startCamera()
-        }
+        cameraAccess.value = accepted
     }
     private val cameraPermission =
         permissionWrapperFor(Manifest.permission.CAMERA, onPermissionResult)
-
-    private val onBarcodeDetected: OnBarcodeDetected = { code ->
-        startActivity(Intent(this, DisplayActivity::class.java).also {
-            it.putExtra(CODE, code)
-        })
-        cameraProvider?.unbind(imageAnalysis)
-    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         installSplashScreen()
@@ -74,28 +67,38 @@ class ScannerActivity : BaseActivity() {
             }
         }
 
-        initCameraController()
         initViews()
-        checkCameraAccess()
+        observeCameraAccess()
+
+        if (!cameraPermission.isGranted) requestCameraAccess()
     }
 
-    private fun initCameraController() {
-        cameraController = LifecycleCameraController(this)
-        cameraController?.bindToLifecycle(this)
+    /**
+     * Read before [super.onStart] so the scanning loop sees the current answer the moment it
+     * re-enters STARTED — a permission granted from system settings does not recreate us.
+     */
+    override fun onStart() {
+        cameraAccess.value = cameraPermission.isGranted
+        super.onStart()
     }
 
     private fun initViews() {
-        binding.barcodeFinderPv.controller = cameraController
         binding.scannerGrp.gone()
 
+        setFlashStatus(FlashStatus.Unavailable)
         binding.cameraAccessBtn.setOnClickListener(::requestCameraAccess)
-        binding.torchBtn.setFlashState(FlashState.OFF)
         binding.torchBtn.setOnClickListener {
-            cameraController?.toggleFlashState()
+            if (scanner.flash.value == FlashStatus.Unavailable) {
+                Toast.makeText(this, R.string.info_flash_unavailable, Toast.LENGTH_SHORT).show()
+            } else {
+                scanner.toggleFlash()
+            }
         }
 
-        cameraController?.torchState?.observe(this) {
-            binding.torchBtn.setFlashState(FlashState.fromTorchState(it))
+        lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                scanner.flash.collectLatest { setFlashStatus(it) }
+            }
         }
 
         binding.toolbar?.setOnMenuItemClickListener {
@@ -106,49 +109,58 @@ class ScannerActivity : BaseActivity() {
         }
     }
 
+    private fun setFlashStatus(status: FlashStatus) {
+        with(binding.torchBtn) {
+            backgroundTintList = ColorStateList.valueOf(getColor(status.bgTint()))
+            setImageDrawable(ContextCompat.getDrawable(context, status.icon()))
+        }
+    }
+
     private fun onClickAbout() {
         startActivity(Intent(this, AboutActivity::class.java))
-    }
-
-    private fun FloatingActionButton.setFlashState(state: FlashState) {
-        backgroundTintList = ColorStateList.valueOf(getColor(state.color()))
-        setImageDrawable(ContextCompat.getDrawable(context, state.icon()))
-    }
-
-    private fun LifecycleCameraController.toggleFlashState() {
-        when (torchState.value) {
-            TorchState.ON -> enableTorch(false)
-            TorchState.OFF -> enableTorch(true)
-            else -> throw RuntimeException("Invalid TorchState")
-        }
-    }
-
-    private fun checkCameraAccess() {
-        cameraPermission.check {
-            startCamera()
-        }
     }
 
     private fun requestCameraAccess() {
         cameraPermission.request()
     }
 
-    override fun onResume() {
-        super.onResume()
-
-        if (cameraPermission.isGranted) {
-            startCamera()
+    /**
+     * The single entry point into the camera: while this screen is visible and holds camera
+     * access, scan into the viewfinder, then show the code.
+     *
+     * One collector means one [Scanner.scan] in flight — [collectLatest] cancels and joins the
+     * previous scan before starting the next, and [repeatOnLifecycle] cancels it on STOP.
+     */
+    private fun observeCameraAccess() {
+        lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                cameraAccess.collectLatest { granted ->
+                    if (granted) startScanning() else askForCameraAccess()
+                }
+            }
         }
     }
 
-    private fun startCamera() {
+    private suspend fun startScanning() {
         makeScannerVisible()
 
-        with(ProcessCameraProvider.getInstance(this)) {
-            addListener(ContextCompat.getMainExecutor(this@ScannerActivity)) {
-                onCameraProviderPrepared(get())
-            }
+        runCatching {
+            scanner.scan(
+                viewFinder = binding.barcodeFinderPv.surfaceProvider,
+                owner = this@ScannerActivity
+            )
+        }.onFailure {
+            // never swallow cancellation; failures are already published on scanner.status
+            if (it is CancellationException) throw it
+        }.onSuccess {
+            onBarcodeDetected(it)
         }
+    }
+
+    private fun onBarcodeDetected(code: ScandyBarcode) {
+        startActivity(Intent(this, DisplayActivity::class.java).also {
+            it.putExtra(CODE, code)
+        })
     }
 
     private fun makeScannerVisible() {
@@ -156,51 +168,8 @@ class ScannerActivity : BaseActivity() {
         binding.scannerGrp.visible()
     }
 
-    private fun onCameraProviderPrepared(provider: ProcessCameraProvider) {
-        this.cameraProvider = provider
-        with(provider) {
-            this@ScannerActivity.imageAnalysis = getImagerAnalyzer()
-            try {
-                unbindAll()
-                bindToLifecycle(
-                    this@ScannerActivity,
-                    CameraSelector.DEFAULT_BACK_CAMERA,
-                    this@ScannerActivity.imageAnalysis,
-                    getPreviewConfig()
-                )
-            } catch (ex: Exception) {
-                Log.e("Scanner", "Unable to bind the camera", ex)
-            }
-        }
-    }
-
-    private fun getPreviewConfig(): Preview {
-        return Preview.Builder().build().also {
-            it.surfaceProvider = binding.barcodeFinderPv.surfaceProvider
-        }
-    }
-
-    @androidx.annotation.OptIn(ExperimentalGetImage::class)
-    private fun getImagerAnalyzer(): ImageAnalysis {
-        val resolutionSelector = ResolutionSelector.Builder()
-            .setResolutionStrategy(
-                ResolutionStrategy(
-                    Size(1280, 720),
-                    ResolutionStrategy.FALLBACK_RULE_CLOSEST_HIGHER_THEN_LOWER
-                )
-            )
-            .build()
-
-        val analyzer = ImageAnalysis.Builder()
-            .setResolutionSelector(resolutionSelector)
-            .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
-            .build()
-
-        analyzer.setAnalyzer(
-            ContextCompat.getMainExecutor(this),
-            BarcodeAnalyzer(onBarcodeDetected)
-        )
-
-        return analyzer
+    private fun askForCameraAccess() {
+        binding.scannerGrp.gone()
+        binding.permissionInfoGrp.visible()
     }
 }

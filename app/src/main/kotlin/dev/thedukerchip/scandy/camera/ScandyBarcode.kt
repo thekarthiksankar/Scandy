@@ -31,9 +31,11 @@ fun Barcode.toScandyBarcode(): ScandyBarcode {
             val text = displayValue?.trim() ?: ""
             ScandyBarcode.Text(text)
         }
+
         Barcode.TYPE_URL -> {
             ScandyBarcode.Link(url!!.title, url!!.url)
         }
+
         else -> ScandyBarcode.Unknown
     }
 }

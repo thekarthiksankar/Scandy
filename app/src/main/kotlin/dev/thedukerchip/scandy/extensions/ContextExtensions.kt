@@ -19,9 +19,3 @@ fun Context.copyToClipboard(label: String, text: String) {
     val clip = ClipData.newPlainText(label, text)
     clipboard.setPrimaryClip(clip)
 }
-
-fun Context.openUrl(url: String) {
-    val uri = Uri.parse(url)
-    val browserIntent = Intent(Intent.ACTION_VIEW, uri)
-    startActivity(browserIntent)
-}
