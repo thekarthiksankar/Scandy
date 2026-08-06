@@ -6,6 +6,7 @@ import android.content.res.ColorStateList
 import android.os.Bundle
 import android.util.Log
 import android.util.Size
+import android.view.ViewGroup
 import androidx.camera.core.*
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.camera.core.resolutionselector.ResolutionSelector
@@ -13,10 +14,14 @@ import androidx.camera.core.resolutionselector.ResolutionStrategy
 import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.camera.view.LifecycleCameraController
 import androidx.core.content.ContextCompat
+import androidx.core.view.ViewCompat
 import androidx.core.view.WindowCompat
+import androidx.core.view.WindowInsetsCompat
+import androidx.core.view.updateLayoutParams
 import com.google.android.material.floatingactionbutton.FloatingActionButton
 import dev.thedukerchip.scandy.camera.BarcodeAnalyzer
 import dev.thedukerchip.scandy.camera.OnBarcodeDetected
+import dev.thedukerchip.scandy.camera.ScandyBarcode
 import dev.thedukerchip.scandy.extensions.*
 import dev.thedukerchip.scandy.permissions.PermissionResult
 import dev.thedukerchip.scandy.permissions.permissionWrapperFor
@@ -54,10 +59,20 @@ class ScannerActivity : BaseActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         installSplashScreen()
         super.onCreate(savedInstanceState)
-        WindowCompat.setDecorFitsSystemWindows(window, true)
+        WindowCompat.enableEdgeToEdge(window)
 
         binding = ActivityScannerBinding.inflate(layoutInflater)
         setContentView(binding.root)
+
+        binding.toolbar?.apply {
+            ViewCompat.setOnApplyWindowInsetsListener(this) { v, windowInsets ->
+                val insets = windowInsets.getInsets(WindowInsetsCompat.Type.statusBars())
+                v.updateLayoutParams<ViewGroup.MarginLayoutParams> {
+                    topMargin = insets.top
+                }
+                WindowInsetsCompat.CONSUMED
+            }
+        }
 
         initCameraController()
         initViews()

@@ -6,8 +6,8 @@
 
     <com.google.android.material.appbar.AppBarLayout
         android:id="@+id/toolbar_container"
+        style="@style/Theme.Scandy.Toolbar"
         android:layout_width="match_parent"
-        android:paddingTop="@dimen/toolbar_spacing"
         android:layout_height="wrap_content"
         app:layout_constraintTop_toTopOf="parent">
 

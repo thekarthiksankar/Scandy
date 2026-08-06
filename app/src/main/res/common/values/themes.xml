@@ -27,5 +27,6 @@
 
     <style name="Theme.Scandy.Toolbar" parent="Widget.MaterialComponents.Toolbar.Primary">
         <item name="backgroundColor">#3DDB85</item>
+        <item name="elevation">0dp</item>
     </style>
 </resources>

@@ -4,8 +4,12 @@ import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Bundle
 import android.util.Log
+import android.view.ViewGroup
 import androidx.core.content.IntentCompat
 import androidx.core.net.toUri
+import androidx.core.view.ViewCompat
+import androidx.core.view.WindowInsetsCompat
+import androidx.core.view.updateLayoutParams
 import dev.thedukerchip.scandy.camera.ScandyBarcode
 import dev.thedukerchip.scandy.extensions.copyToClipboard
 import dev.thedukerchip.scandy.ui.BaseActivity
@@ -21,6 +25,16 @@ class DisplayActivity : BaseActivity() {
         super.onCreate(savedInstanceState)
         binding = ActivityDisplayBinding.inflate(layoutInflater)
         setContentView(binding.root)
+
+        binding.toolbar.apply {
+            ViewCompat.setOnApplyWindowInsetsListener(this) { v, windowInsets ->
+                val insets = windowInsets.getInsets(WindowInsetsCompat.Type.statusBars())
+                v.updateLayoutParams<ViewGroup.MarginLayoutParams> {
+                    topMargin = insets.top
+                }
+                WindowInsetsCompat.CONSUMED
+            }
+        }
 
         initViews()
     }
