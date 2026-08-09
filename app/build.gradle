@@ -3,6 +3,7 @@
 
 plugins {
     alias(libs.plugins.android.application)
+    alias(libs.plugins.compose.compiler)
 }
 android {
     compileSdk 37
@@ -42,6 +43,7 @@ android {
     }
 
     buildFeatures {
+        compose true
         viewBinding true
     }
 
@@ -58,6 +60,15 @@ android {
 }
 
 dependencies {
+    def composeBom = platform(libs.androidx.compose.bom)
+    implementation composeBom
+    androidTestImplementation composeBom
+
+    implementation libs.bundles.androidx.compose
+    debugImplementation libs.androidx.compose.ui.tooling
+    implementation libs.androidx.activity.compose
+    implementation libs.bundles.androidx.lifecycle.compose
+
     implementation libs.bundles.kotlinx.coroutines
     implementation libs.androidx.coreKtx
     implementation libs.androidx.core.splashscreen
