@@ -1,5 +1,5 @@
 package dev.thedukerchip.scandy.ui
 
-import androidx.fragment.app.FragmentActivity
+import androidx.activity.ComponentActivity
 
-open class BaseActivity : FragmentActivity()
+open class BaseActivity : ComponentActivity()
