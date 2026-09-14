@@ -30,4 +30,4 @@ androidx-navigation = ["androidx-navigation-fragment", "androidx-navigation-ui"]
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
-ksp = { id = "com.google.devtools.ksp", version = "2.3.9" }
+ksp = { id = "com.google.devtools.ksp", version = "2.3.12" }
