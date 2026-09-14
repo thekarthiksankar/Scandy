@@ -1,7 +1,7 @@
 [versions]
 agp = "9.3.1"
 androidxCamera = "1.6.1"
-androidxNavigation = "2.9.8"
+androidxNavigation = "2.10.1"
 androidxRoom = "2.8.4"
 
 [libraries]
